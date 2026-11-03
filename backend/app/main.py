@@ -8,7 +8,7 @@ from .database import Base, SessionLocal, engine
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from .ratelimit import limiter
-from .routers import admin, auth, billing, licenses, marketing, misc
+from .routers import admin, auth, billing, email_marketing, licenses, marketing, misc
 from .security import hash_password
 
 app = FastAPI(title=settings.app_name, version="1.0.0",
@@ -28,6 +28,7 @@ app.include_router(marketing.router)
 app.include_router(marketing.seo_router)
 app.include_router(marketing.crm_router)
 app.include_router(misc.router)
+app.include_router(email_marketing.router)
 
 @app.on_event("startup")
 def seed():

@@ -19,6 +19,7 @@ def _issue_tokens(user: models.User) -> schemas.TokenOut:
                             role=user.role, email_verified=user.email_verified)
 
 @router.post("/register", response_model=schemas.TokenOut, status_code=201)
+@limiter.limit("30/minute")
 def register(request: Request, data: schemas.RegisterIn, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == data.email.lower()).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
@@ -39,6 +40,7 @@ def register(request: Request, data: schemas.RegisterIn, db: Session = Depends(g
     return tokens
 
 @router.post("/login", response_model=schemas.TokenOut)
+@limiter.limit("30/minute")
 def login(request: Request, data: schemas.LoginIn, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == data.email.lower()).first()
     if not user or not verify_password(data.password, user.hashed_password) or not user.is_active:

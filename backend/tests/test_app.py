@@ -80,3 +80,15 @@ def test_rate_limit_on_login(client):
     for _ in range(35):
         r = client.post("/auth/login", json={"email": "rl@example.com", "password": "wrong-password-1"})
     assert r.status_code == 429
+
+def test_email_marketing(client):
+    tokens = client.post("/auth/register", json={"email": "em@example.com", "password": "S3curePass!23"}).json()
+    h = {"Authorization": f"Bearer {tokens['access_token']}"}
+    r = client.post("/email/subscribers", json={"email": "sub1@example.com"}, headers=h)
+    assert r.status_code == 201
+    assert client.post("/email/subscribers", json={"email": "sub1@example.com"}, headers=h).status_code == 409
+    c = client.post("/email/campaigns", json={"subject": "Hi", "body": "Hello world"}, headers=h).json()
+    send = client.post(f"/email/campaigns/{c['id']}/send", headers=h)
+    assert send.status_code == 200
+    # no SMTP configured: nothing is claimed sent
+    assert send.json()["sent"] == 0

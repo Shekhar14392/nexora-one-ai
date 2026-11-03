@@ -1,6 +1,7 @@
+import secrets
 import uuid
 from datetime import datetime
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, JSON,
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, JSON, UniqueConstraint,
                         String, Text, Float, Enum)
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -224,3 +225,28 @@ class Website(Base, TimestampMixin):
     url = Column(String(500), nullable=False)
     integration_authorized = Column(Boolean, default=False, nullable=False)
     analytics = Column(JSON, default=dict)
+
+
+class EmailSubscriber(Base):
+    __tablename__ = "email_subscribers"
+    id = Column(String(32), primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id = Column(String(32), ForeignKey("organizations.id"), nullable=False, index=True)
+    email = Column(String(255), nullable=False)
+    list_name = Column(String(100), default="default")
+    unsubscribed = Column(Boolean, default=False)
+    unsub_token = Column(String(64), default=lambda: secrets.token_hex(16))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (UniqueConstraint("organization_id", "email", "list_name", name="uq_subscriber"),)
+
+class EmailCampaign(Base):
+    __tablename__ = "email_campaigns"
+    id = Column(String(32), primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id = Column(String(32), ForeignKey("organizations.id"), nullable=False, index=True)
+    created_by = Column(String(32), ForeignKey("users.id"))
+    subject = Column(String(255), nullable=False)
+    body = Column(Text, nullable=False)
+    list_name = Column(String(100), default="default")
+    status = Column(String(20), default="draft")  # draft | sent | sent_with_failures
+    sent_count = Column(Integer, default=0)
+    failed_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
