@@ -70,3 +70,13 @@ def test_lead_scoring(client):
     r = client.post("/crm/leads", json={"name": "Asha", "email": "asha@example.com", "phone": "+91 90000 00000",
                                         "source": "referral"}, headers=h)
     assert r.status_code == 201 and r.json()["score"] == 80
+
+def test_email_provider_not_claimed_when_unconfigured(client):
+    r = client.post("/auth/register", json={"email": "mailer@example.com", "password": "S3curePass!23"})
+    assert r.status_code == 201
+    assert r.json()["email_sent"] is False  # no SMTP configured: never claims a send
+
+def test_rate_limit_on_login(client):
+    for _ in range(35):
+        r = client.post("/auth/login", json={"email": "rl@example.com", "password": "wrong-password-1"})
+    assert r.status_code == 429

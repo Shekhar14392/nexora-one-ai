@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from . import models
 from .config import settings
 from .database import Base, SessionLocal, engine
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from .ratelimit import limiter
 from .routers import admin, auth, billing, licenses, marketing, misc
 from .security import hash_password
 
@@ -13,6 +16,8 @@ app = FastAPI(title=settings.app_name, version="1.0.0",
 
 app.add_middleware(CORSMiddleware, allow_origins=[settings.frontend_origin],
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(auth.router)
 app.include_router(admin.router)

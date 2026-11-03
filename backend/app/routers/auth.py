@@ -4,6 +4,9 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..config import settings
 from ..database import get_db
+from fastapi import Request
+from ..ratelimit import limiter
+from ..emailer import recovery_email, verification_email
 from ..security import (audit, create_access_token, create_refresh_token,
                         decode_token, get_current_user, hash_password,
                         verify_password)
@@ -16,7 +19,7 @@ def _issue_tokens(user: models.User) -> schemas.TokenOut:
                             role=user.role, email_verified=user.email_verified)
 
 @router.post("/register", response_model=schemas.TokenOut, status_code=201)
-def register(data: schemas.RegisterIn, db: Session = Depends(get_db)):
+def register(request: Request, data: schemas.RegisterIn, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == data.email.lower()).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
     org = models.Organization(name=data.organization_name)
@@ -30,11 +33,13 @@ def register(data: schemas.RegisterIn, db: Session = Depends(get_db)):
     audit(db, "auth.register", user.id, {"email": user.email})
     tokens = _issue_tokens(user)
     if settings.environment == "development":
-        tokens.verification_token = user.verification_token
+        tokens.verification_token = user.verification_token if settings.environment == "development" else None
+        delivery = verification_email(user.email, user.verification_token)
+        tokens.email_sent = bool(delivery.get("sent"))
     return tokens
 
 @router.post("/login", response_model=schemas.TokenOut)
-def login(data: schemas.LoginIn, db: Session = Depends(get_db)):
+def login(request: Request, data: schemas.LoginIn, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == data.email.lower()).first()
     if not user or not verify_password(data.password, user.hashed_password) or not user.is_active:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
@@ -71,6 +76,7 @@ def recover(data: schemas.EmailIn, db: Session = Depends(get_db)):
     # Always report ok: never reveal whether an email exists.
     if user:
         user.recovery_token = secrets.token_hex(16)
+        recovery_email(user.email, user.recovery_token)
         db.commit()
     return {"ok": True}
 

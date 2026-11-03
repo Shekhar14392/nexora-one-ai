@@ -17,6 +17,7 @@ class TokenOut(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     verification_token: Optional[str] = None
+    email_sent: Optional[bool] = None
     role: str
     email_verified: bool
 

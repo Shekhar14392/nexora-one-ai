@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     ai_api_base: str = os.getenv("NEXORA_AI_API_BASE", "https://api.openai.com/v1")
     ai_model: str = os.getenv("NEXORA_AI_MODEL", "gpt-4o-mini")
     frontend_origin: str = os.getenv("NEXORA_FRONTEND_ORIGIN", "http://localhost:3000")
+    # Email delivery provider (SMTP). Unconfigured = mail is skipped and logged, never claimed sent.
+    smtp_host: str = os.getenv("NEXORA_SMTP_HOST", "")
+    smtp_port: int = int(os.getenv("NEXORA_SMTP_PORT", "587"))
+    smtp_user: str = os.getenv("NEXORA_SMTP_USER", "")
+    smtp_password: str = os.getenv("NEXORA_SMTP_PASSWORD", "")
+    smtp_from: str = os.getenv("NEXORA_SMTP_FROM", "")
 
 settings = Settings()
 
