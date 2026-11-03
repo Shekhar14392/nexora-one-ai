@@ -92,3 +92,12 @@ def test_email_marketing(client):
     assert send.status_code == 200
     # no SMTP configured: nothing is claimed sent
     assert send.json()["sent"] == 0
+
+def test_social_honest_states(client):
+    tokens = client.post("/auth/register", json={"email": "soc@example.com", "password": "S3curePass!23"}).json()
+    h = {"Authorization": f"Bearer {tokens['access_token']}"}
+    accs = client.get("/social/accounts", headers=h).json()
+    assert all(a["status"] == "not_connected" for a in accs)  # no fake "connected" without OAuth
+    p = client.post("/social/posts", json={"platform": "linkedin", "body": "Launch day"}, headers=h).json()
+    pub = client.post(f"/social/posts/{p['id']}/publish", headers=h)
+    assert pub.status_code == 200 and pub.json()["status"] == "export_ready"

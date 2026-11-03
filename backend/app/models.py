@@ -250,3 +250,16 @@ class EmailCampaign(Base):
     sent_count = Column(Integer, default=0)
     failed_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SocialPost(Base):
+    __tablename__ = "social_posts"
+    id = Column(String(32), primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id = Column(String(32), ForeignKey("organizations.id"), nullable=False, index=True)
+    created_by = Column(String(32), ForeignKey("users.id"))
+    platform = Column(String(40), nullable=False)  # facebook|instagram|youtube|linkedin|tiktok|pinterest|x|other
+    body = Column(Text, nullable=False)
+    scheduled_at = Column(DateTime, nullable=True)
+    status = Column(String(20), default="draft")  # draft|scheduled|published|export_ready
+    external_ref = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
