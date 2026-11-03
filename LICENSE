@@ -1,0 +1,14 @@
+NEXORA AI - Commercial License (template; replace <OWNER> before publishing)
+
+Copyright (c) 2026 <OWNER>. All rights reserved.
+
+1. Grant. The copyright holder grants buyers of a valid NEXORA AI license the right to
+   install and operate this software on the number of domains covered by that license.
+2. Restrictions. Redistribution of the source code, resale without a reseller agreement,
+   removal of license verification, or use to build a competing platform is prohibited.
+3. Resellers. Resellers operate under a separate signed reseller agreement
+   (documentation/reseller-agreement-template.md) and may distribute licenses per its terms.
+4. Warranty. Provided "as is", without warranty of any kind. The copyright holder is not
+   liable for damages arising from use of the software.
+5. Ownership. All intellectual property in NEXORA AI remains with the copyright holder.
+6. Dependencies. Third-party packages keep their own open-source licenses (see documentation/).

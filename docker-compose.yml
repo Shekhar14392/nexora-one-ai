@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nexora
+      POSTGRES_PASSWORD: ${NEXORA_DB_PASSWORD:-nexora-local-only}
+      POSTGRES_DB: nexora
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexora"]
+      interval: 10s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      NEXORA_DATABASE_URL: postgresql+psycopg://nexora:${NEXORA_DB_PASSWORD:-nexora-local-only}@db:5432/nexora
+      NEXORA_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db: {condition: service_healthy}
+    ports: ["8000:8000"]
+  frontend:
+    build: ./frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on: [backend]
+    ports: ["3000:3000"]
+volumes:
+  pgdata:
