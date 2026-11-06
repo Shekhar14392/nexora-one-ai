@@ -10,9 +10,8 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(scope="module")
 def client():
-    import os
-    if os.path.exists("test_nexora.db"):
-        os.remove("test_nexora.db")
+    # no db-file removal here: deleting the file under an already-bound engine
+    # breaks later test modules; test_app's own fixture manages its own reset
     from app.main import app
     with TestClient(app) as c:
         yield c
