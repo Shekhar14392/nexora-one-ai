@@ -63,6 +63,29 @@ def checkout(data: schemas.CheckoutIn, user: models.User = Depends(get_current_u
         db.commit()
         return {"invoice": invoice.number, "provider": "razorpay", "order_id": order["id"],
                 "amount": amount, "key_id": settings.razorpay_key_id}
+    if data.provider == "paypal" and settings.paypal_client_id and settings.paypal_client_secret:
+        import httpx
+        token_resp = httpx.post(f"{settings.paypal_api_base}/v1/oauth2/token",
+                                auth=(settings.paypal_client_id, settings.paypal_client_secret),
+                                data={"grant_type": "client_credentials"})
+        if token_resp.status_code >= 300:
+            raise HTTPException(502, "Could not authenticate with PayPal; check PayPal credentials")
+        bearer = token_resp.json().get("access_token")
+        resp = httpx.post(f"{settings.paypal_api_base}/v2/checkout/orders",
+                          headers={"Authorization": f"Bearer {bearer}", "Content-Type": "application/json"},
+                          json={"intent": "CAPTURE",
+                                "purchase_units": [{"reference_id": invoice.number,
+                                                    "amount": {"currency_code": plan.currency,
+                                                               "value": f"{amount:.2f}"}}]})
+        if resp.status_code >= 300:
+            raise HTTPException(502, "Payment gateway rejected the order; check PayPal credentials")
+        order = resp.json()
+        approve = next((l["href"] for l in order.get("links", []) if l.get("rel") == "approve"), None)
+        db.add(models.Payment(user_id=user.id, provider="paypal", amount=amount,
+                              currency=plan.currency, provider_ref=order.get("id"), invoice_id=invoice.id))
+        db.commit()
+        return {"invoice": invoice.number, "provider": "paypal", "order_id": order.get("id"),
+                "approval_url": approve, "amount": amount}
     # No gateway configured: record the invoice. Subscriptions NEVER activate on claims.
     db.add(models.Payment(user_id=user.id, provider="manual", amount=amount,
                           currency=plan.currency, invoice_id=invoice.id))
