@@ -41,7 +41,7 @@ def test_checkout_paypal_creates_order(client, monkeypatch):
     assert body["approval_url"] == "https://paypal.example/approve"
     assert "/v1/oauth2/token" in calls[0] and "/v2/checkout/orders" in calls[1]
     invoices = client.get("/billing/invoices", headers=h).json()
-    assert invoices[0]["status"] == "pending"
+    assert invoices[0]["status"] == "due"
     # subscription stays pending until the PayPal capture webhook verifies
     sub = client.get("/billing/subscription", headers=h).json()
     assert sub["status"] == "pending"
