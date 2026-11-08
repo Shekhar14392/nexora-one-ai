@@ -263,3 +263,28 @@ class SocialPost(Base):
     status = Column(String(20), default="draft")  # draft|scheduled|published|export_ready
     external_ref = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class VoiceAgent(Base, TimestampMixin):
+    __tablename__ = "voice_agents"
+    id = Column(String(32), primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id = Column(String(32), ForeignKey("organizations.id"), nullable=False, index=True)
+    created_by = Column(String(32), ForeignKey("users.id"))
+    name = Column(String(200), nullable=False)
+    language = Column(String(10), default="en")
+    script = Column(Text, default="")
+    is_active = Column(Boolean, default=True)
+
+
+class VoiceCall(Base, TimestampMixin):
+    __tablename__ = "voice_calls"
+    id = Column(String(32), primary_key=True, default=lambda: str(uuid.uuid4()))
+    agent_id = Column(String(32), ForeignKey("voice_agents.id"), nullable=False)
+    organization_id = Column(String(32), ForeignKey("organizations.id"), nullable=False, index=True)
+    to_phone = Column(String(32), nullable=False)
+    # queued | dialing | not_configured | failed
+    status = Column(String(20), default="queued")
+    provider = Column(String(30), default="")
+    provider_ref = Column(String(255), nullable=True)
+    outcome_note = Column(Text, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)

@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     smtp_password: str = os.getenv("NEXORA_SMTP_PASSWORD", "")
     smtp_from: str = os.getenv("NEXORA_SMTP_FROM", "")
 
+    # Voice provider (outbound calls). Unconfigured = calls are never dialed and never claimed dialed.
+    voice_provider: str = os.getenv("NEXORA_VOICE_PROVIDER", "")  # "" | twilio
+    voice_account_sid: str = os.getenv("NEXORA_VOICE_ACCOUNT_SID", "")
+    voice_auth_token: str = os.getenv("NEXORA_VOICE_AUTH_TOKEN", "")
+    voice_from_number: str = os.getenv("NEXORA_VOICE_FROM_NUMBER", "")
+
 settings = Settings()
 
 if not settings.jwt_secret:
